@@ -24,6 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+
 # Import libraries
 from netmiko import ConnectHandler
 import re
@@ -49,11 +50,11 @@ with ConnectHandler(ip = device["address"],
 
     try:
         # Use regular expressions to parse the output for desired data
-        name = re.search(r'interface (.*)', interface).group(1)
-        description = re.search(r'description (.*)', interface).group(1)
+        name = re.search(r'interface (.*)', interface)[1]
+        description = re.search(r'description (.*)', interface)[1]
         ip_info = re.search(r'ip address (.*) (.*)', interface)
-        ip = ip_info.group(1)
-        netmask = ip_info.group(2)
+        ip = ip_info[1]
+        netmask = ip_info[2]
 
         # Print the info to the screen
         print("The interface {name} has ip address {ip}/{mask}".format(

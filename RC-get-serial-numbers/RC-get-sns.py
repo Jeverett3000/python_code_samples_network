@@ -65,7 +65,7 @@ def main():
                 args.username, args.password), headers=headers, verify=False)
             response.raise_for_status()
         except Exception as e:
-            print('Failed to get inventory from device: {}'.format(e))
+            print(f'Failed to get inventory from device: {e}')
             continue
 
         inv = response.json()
@@ -81,9 +81,9 @@ def main():
                 {'sn': asset['serial-number'], 'pn': asset['part-number']})
 
     for host, comps in inv_cache.items():
-        print('Host {} serial numbers:'.format(host))
+        print(f'Host {host} serial numbers:')
         for comp in comps:
-            print('\t{}'.format(comp['sn']))
+            print(f"\t{comp['sn']}")
 
 
 if __name__ == '__main__':

@@ -59,7 +59,7 @@ def checkPortFlap(port_flaps_cnt,interface):
 
     # calculate current time using time module
     currTime = time.time()
-    print("curr time is: %s" % (currTime))
+    print(f"curr time is: {currTime}")
 
     # retrieve the show log output
     arr_output = cli.cli("show log").split("\n")
@@ -67,36 +67,39 @@ def checkPortFlap(port_flaps_cnt,interface):
     for line in arr_output:
 
         # In this example I am monitoring the Gi 1/0/5 interface, based on your requirement change the interface ID.
-        if(line.find("GigabitEthernet1/0/5, changed state to down") != -1):
-            print("The line %s indicates a port flap action" % (line))
+        if (line.find("GigabitEthernet1/0/5, changed state to down") != -1):
+            print(f"The line {line} indicates a port flap action")
             line_arr = line.split("%")
 
             # seperate the date from the log lines and convert the matching line to list objects and strings
             date_in_log = line_arr[0]
-            print("the entry date is: %s" % (date_in_log))
+            print(f"the entry date is: {date_in_log}")
             line_arr = line.split(",")
             line_arr_1 = line_arr[0].split(" ")
             str_line_arr_0=''.join(line_arr_1[0])
 
             # remove * and : from the strings
             str_line_arr_0= str_line_arr_0[1:]
-            str_line_arr_1=''.join(line_arr_1[3])  
+            str_line_arr_1=''.join(line_arr_1[3])
             str_line_arr_1=str_line_arr_1[:-1]
 
             # parse a string to represent a time according to a format
-            log_time = time.strptime(str_line_arr_0+" "+line_arr_1[1]+" "+line_arr_1[2]+" "+str_line_arr_1, "%b %d %Y %H:%M:%S") 
-            
+            log_time = time.strptime(
+                f"{str_line_arr_0} {line_arr_1[1]} {line_arr_1[2]} {str_line_arr_1}",
+                "%b %d %Y %H:%M:%S",
+            ) 
+
             # calculate the log time in seconds
             log_time_secs = mktime(log_time)
 
             # calculate the difference from current time to log time
             delta=currTime-log_time_secs
             interface = line_arr_1[len(line_arr_1) - 1]
-            print("the interface is: %s" % (interface))
-            
+            print(f"the interface is: {interface}")
+
             # if delta is less than 5 minutes that log will be counted.
             if delta <= 300:
-                port_flaps_cnt = port_flaps_cnt + 1  
+                port_flaps_cnt = port_flaps_cnt + 1
     return port_flaps_cnt, interface
            
        
@@ -111,15 +114,15 @@ def send_e_mail(subject):
     host_name = cli.cli("show running-config | include hostname")
     FROM_ADDR = 'xxxx@cisco.com'
     TO_ADDR = 'xxxx@gmail.com'
-    
+
     # create the message
     msg = MIMEMultipart()
     msg['From'] = FROM_ADDR
     msg['To'] = TO_ADDR
-    msg['Subject'] = "%s - %s" % (subject, host_name)
+    msg['Subject'] = f"{subject} - {host_name}"
     text = "This is an automated e mail message:\n===========================\nAn on-Box Python script running on a Cisco Polaris guestshell device and detected that the %s %s \n===========================\n\n\n===========================\n\n" % (subject, host_name)
     msg.attach(MIMEText(text, 'plain'))
-    
+
     # connect to server and send
     server = smtplib.SMTP('outbound.your_company_name.com', 25)
     server.sendmail(FROM_ADDR, TO_ADDR, msg.as_string())
@@ -158,24 +161,24 @@ if __name__ == '__main__':
 
 
     port_flaps_cnt = 0
-    interface = None  
+    interface = None
     port_flaps = checkPortFlap(port_flaps_cnt,interface)
 
-    if(port_flaps[0] == 10):
-        if(port_flaps[1] is not None):
-            print("shutting down interface %s" % (port_flaps[1]))
+    if (port_flaps[0] == 10):
+        if (port_flaps[1] is not None):
+            print(f"shutting down interface {port_flaps[1]}")
 
             # shut down the interface using cli module
             #cli(["interface %s" % (port_flaps[1]), "shut", "end"])
-            cli.configurep(["interface %s" % (port_flaps[1]), "shut", "end"])
+            cli.configurep([f"interface {port_flaps[1]}", "shut", "end"])
 
             # wait for 5 mins to monitor the interface flap again
-            time.sleep(300) 
-            print("Waited for 5 mins Enabling the interface %s" % (port_flaps[1]))
+            time.sleep(300)
+            print(f"Waited for 5 mins Enabling the interface {port_flaps[1]}")
 
             # enable the interface
             #cli("cont f", "interfact %s" % (port_flaps[1]), "no shut", "end")
-            cli.configurep(["interface %s" % (port_flaps[1]), "no shut", "end"])
+            cli.configurep([f"interface {port_flaps[1]}", "no shut", "end"])
             port_flaps_cnt = 0
             interface = None 
 
@@ -183,10 +186,10 @@ if __name__ == '__main__':
             port_flaps = checkPortFlap(port_flaps_cnt,interface)
 
             # if still flapping shut down the interface and send email
-            if(port_flaps[0] >= 2):
-                if(port_flaps[1] is not None):
-                    print("shutting down interface %s" % (port_flaps[1]))
+            if (port_flaps[0] >= 2):
+                if (port_flaps[1] is not None):
+                    print(f"shutting down interface {port_flaps[1]}")
                     #cli("cont f", "interfact %s" % (port_flaps[1]), "shut", "end")
-                    cli.configurep(["interface %s" % (port_flaps[1]), "shut", "end"])
-                    set_device_to_role_as_cisco_mail_server()   
-                    send_e_mail("interface %s is flapping and did admin shutdown" % (port_flaps[1]))
+                    cli.configurep([f"interface {port_flaps[1]}", "shut", "end"])
+                    set_device_to_role_as_cisco_mail_server()
+                    send_e_mail(f"interface {port_flaps[1]} is flapping and did admin shutdown")
