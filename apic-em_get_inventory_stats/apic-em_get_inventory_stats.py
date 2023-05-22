@@ -69,11 +69,7 @@ def fetch_url(url, error, p=False, timeout=REST_TIMEOUT):
     requests.packages.urllib3.disable_warnings()
     req = 'GET'
     data = {}
-    headers = {}
-    params = {}
-
-    if 'get' in p:
-        params = p['get']
+    params = p['get'] if 'get' in p else {}
     if 'post' in p:
         req = 'POST'
         data = p['post']
@@ -83,46 +79,42 @@ def fetch_url(url, error, p=False, timeout=REST_TIMEOUT):
             p['header'] = {}
         p['header']['Content-Length'] = len(p['put'])
         data = p['put']
-    if 'header' in p:
-        headers = p['header']
-
+    headers = p['header'] if 'header' in p else {}
     req = Request(req, url, data=data, params=params, headers=headers)
     ph = req.prepare()
 
     if DEBUG:
-        print('DEBUG: Requested URL {}'.format(url))
+        print(f'DEBUG: Requested URL {url}')
         print('DEBUG:  Headers = ')
         for h in ph.headers:
-            print('  {} : {}'.format(h, ph.headers[h]))
+            print(f'  {h} : {ph.headers[h]}')
         print('DEBUG:  Parameters = ')
         for par, val in params.items():
-            print('  {} : {}'.format(par, val))
-        print('DEBUG: Body    = {}'.format(ph.body))
+            print(f'  {par} : {val}')
+        print(f'DEBUG: Body    = {ph.body}')
 
     res = s.send(ph, verify=False, timeout=timeout)
 
-    if res.status_code > 299:
-        if DEBUG:
-            print('DEBUG: The server returned code: {} response: {}'.format(
-                str(res.status_code), res.text))
-            print('DEBUG: Response Headers: ')
-            for h in res.headers:
-                print('  {} : {}'.format(h, res.headers[h]))
-        error.set_code(res.status_code)
-        j = res.json()
-        error.set_msg(j['response']['message'])
-        return None
-    else:
+    if res.status_code <= 299:
         return res.text
+    if DEBUG:
+        print(
+            f'DEBUG: The server returned code: {res.status_code} response: {res.text}'
+        )
+        print('DEBUG: Response Headers: ')
+        for h, value in res.headers.items():
+            print(f'  {h} : {value}')
+    error.set_code(res.status_code)
+    j = res.json()
+    error.set_msg(j['response']['message'])
+    return None
 
 
 def get_device_count(host, port, ticket, error):
     global REST_RETRIES, REST_RETRY_INTERVAL
 
-    url = 'https://{}:{}/api/v1/network-device/count'.format(host, port)
-    p = {}
-    p['header'] = {"X-Auth-Token": ticket}
-
+    url = f'https://{host}:{port}/api/v1/network-device/count'
+    p = {'header': {"X-Auth-Token": ticket}}
     i = 0
     res = None
     while i < REST_RETRIES:
@@ -130,7 +122,7 @@ def get_device_count(host, port, ticket, error):
         if res is not None:
             break
         time.sleep(REST_RETRY_INTERVAL)
-        i = i + 1
+        i += 1
     if res is not None:
         j = json.loads(res)
         return j['response']
@@ -141,11 +133,11 @@ def get_device_count(host, port, ticket, error):
 def get_ticket(host, port, user, password, error):
     global REST_RETRIES, REST_RETRY_INTERVAL
 
-    url = 'https://{}:{}/api/v1/ticket'.format(host, port)
-    p = {}
-
-    p['post'] = json.dumps({"username": user, "password": password})
-    p['header'] = {"Content-Type": "application/json"}
+    url = f'https://{host}:{port}/api/v1/ticket'
+    p = {
+        'post': json.dumps({"username": user, "password": password}),
+        'header': {"Content-Type": "application/json"},
+    }
 
     i = 0
     res = None
@@ -154,7 +146,7 @@ def get_ticket(host, port, user, password, error):
         if res is not None:
             break
         time.sleep(REST_RETRY_INTERVAL)
-        i = i + 1
+        i += 1
     if res is not None:
         j = json.loads(res)
         return j['response']['serviceTicket']
@@ -165,10 +157,8 @@ def get_ticket(host, port, user, password, error):
 def get_inventory(host, port, ticket, error):
     global REST_RETRIES, REST_RETRY_INTERVAL, REST_PAGE_LIMIT
 
-    url = 'https://{}:{}/api/v1/network-device'.format(host, port)
-    p = {}
-
-    p['header'] = {"X-Auth-Token": ticket}
+    url = f'https://{host}:{port}/api/v1/network-device'
+    p = {'header': {"X-Auth-Token": ticket}}
 
     count = get_device_count(host, port, ticket, error)
     if count is None:
@@ -189,7 +179,7 @@ def get_inventory(host, port, ticket, error):
             if res is not None:
                 break
             time.sleep(REST_RETRY_INTERVAL)
-            i = i + 1
+            i += 1
         if res is not None:
             j = json.loads(res)
             devs += j['response']
@@ -227,12 +217,12 @@ if __name__ == '__main__':
     ticket = get_ticket(args.hostname, args.port,
                         args.username, args.password, error)
     if ticket is None:
-        print('Error obtaining RBAC ticket from APIC-EM: {}'.format(error.get_msg()))
+        print(f'Error obtaining RBAC ticket from APIC-EM: {error.get_msg()}')
         sys.exit(1)
 
     inventory = get_inventory(args.hostname, args.port, ticket, error)
     if inventory is None:
-        print('Error obtaining inventory from APIC-EM: {}'.format(error.get_msg()))
+        print(f'Error obtaining inventory from APIC-EM: {error.get_msg()}')
         sys.exit(1)
 
     for dev in inventory:
@@ -253,20 +243,18 @@ if __name__ == '__main__':
     for fams in fam_sort:
         family = fams[0]
         model = fams[1]
-        total = 0
         mod_sort = sorted(model.items(), key=lambda x: sum(x[1].values()))
-        for m in model.values():
-            total += sum(m.values())
-        print('{} (total: {})'.format(family, total))
+        total = sum(sum(m.values()) for m in model.values())
+        print(f'{family} (total: {total})')
         for mods in mod_sort:
             m = mods[0]
             c = mods[1]
-            print(' {} (total: {})'.format(m, sum(c.values())))
+            print(f' {m} (total: {sum(c.values())})')
 
             c_sort = sorted(
                 c.items(), key=operator.itemgetter(1), reverse=True)
             for revs in c_sort:
                 code = revs[0]
                 count = revs[1]
-                print('  {} (total: {})'.format(code, count))
+                print(f'  {code} (total: {count})')
         print('')

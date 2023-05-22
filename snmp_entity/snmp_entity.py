@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if args.version != 1 and args.version != 2:
+    if args.version not in [1, 2]:
         parser.error('SNMP version must be either 1 or 2')
 
     vars = netsnmp.VarList(netsnmp.Varbind('entityMIB'))
@@ -55,4 +55,4 @@ if __name__ == '__main__':
         Community = args.community)
 
 for var in vars:
-    print('{}.{} : {}'.format(var.tag, var.iid, var.val))
+    print(f'{var.tag}.{var.iid} : {var.val}')

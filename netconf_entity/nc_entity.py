@@ -66,4 +66,4 @@ if __name__ == '__main__':
             c = m.get(entity_filter).data_xml
             print(xml.dom.minidom.parseString(c).toprettyxml())
         except Exception as e:
-            print('Failed to execute <get> RPC: {}'.format(e))
+            print(f'Failed to execute <get> RPC: {e}')

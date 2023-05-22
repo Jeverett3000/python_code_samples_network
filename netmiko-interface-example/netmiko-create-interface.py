@@ -24,6 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+
 # Import libraries
 from netmiko import ConnectHandler
 
@@ -37,10 +38,10 @@ loopback = {"int_name": "Loopback103",
 
 # Create a CLI configuration
 interface_config = [
-    "interface {}".format(loopback["int_name"]),
-    "description {}".format(loopback["description"]),
-    "ip address {} {}".format(loopback["ip"], loopback["netmask"]),
-    "no shut"
+    f'interface {loopback["int_name"]}',
+    f'description {loopback["description"]}',
+    f'ip address {loopback["ip"]} {loopback["netmask"]}',
+    "no shut",
 ]
 
 # Open CLI connection to device

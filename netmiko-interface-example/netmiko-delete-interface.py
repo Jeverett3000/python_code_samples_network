@@ -24,6 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+
 # Import libraries
 from netmiko import ConnectHandler
 
@@ -33,9 +34,7 @@ from device_info import ios_xe1 as device # noqa
 loopback = {"int_name": "Loopback103"}
 
 # Create a CLI configuration
-interface_config = [
-    "no interface {}".format(loopback["int_name"])
-]
+interface_config = [f'no interface {loopback["int_name"]}']
 
 # Open CLI connection to device
 with ConnectHandler(ip = device["address"],

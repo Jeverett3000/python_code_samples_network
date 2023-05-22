@@ -17,7 +17,7 @@ o1 = cli.execute('show ip int brief | include Ethernet1/0/.*up');
 # that are UP on the host!
 
 # Create this thing called intfs. Make it a Python dictionary.
-intfs = dict()
+intfs = {}
 
 # Create a function to grab the list of interfaces from passed in data. 
 def grab_intf(i):
@@ -38,21 +38,21 @@ for i in o1.split('\n'):
 
 # Run through our interface list.
 for i in intfs:
-   # While we run through our interface list, each time we iterate, create 
-   # this thing called cmd, and set it equal to the output of the command. 
-   cmd = "test cable-diagnostics tdr interface " + i
-   # And each time we do, create this thing called o2, and set it 
-   # equal to the execution of each command for each interface on the host.
-   o2 = cli.execute(cmd);
+       # While we run through our interface list, each time we iterate, create 
+       # this thing called cmd, and set it equal to the output of the command.
+    cmd = f"test cable-diagnostics tdr interface {i}"
+    # And each time we do, create this thing called o2, and set it 
+    # equal to the execution of each command for each interface on the host.
+    o2 = cli.execute(cmd);
 
 # Create this thing called done and set it to a value of False. Essentially, 
 # we're not done!
 done = False
 
-# Create a loop condition for when we're not done.    
-while done == False:
+# Create a loop condition for when we're not done.
+while not done:
 
-    # Remember our list of interfaces? Run through them again.   
+    # Remember our list of interfaces? Run through them again.
     for i in intfs:
         # If we already have data for an interface, then skip
         if intfs[i] != "":
@@ -61,7 +61,7 @@ while done == False:
         # Try to get data for the interface we are working on.
         # Once again, create this thing called cmd, and set it equal to the 
         # iterative exec command for all of our interfaces.
-        cmd = "show cable-diagnostics tdr interface " + i 
+        cmd = f"show cable-diagnostics tdr interface {i}"
         # And create this thing called o2, and execute each CLI.
         o2 = cli.execute(cmd);
         # Parse the data we get. We are making sure the TDR test runs, and 
@@ -75,25 +75,18 @@ while done == False:
 
     time.sleep(2)
 
-    # now loop again looking to see if we are all done
-    found_one = False
-    for i in intfs:
-        if intfs[i] == "":
-            found_one = True;
-    if found_one == False:
+    found_one = any(intfs[i] == "" for i in intfs)
+    if not found_one:
         done = True        
 
-# We are done gathering now just print output
-target = open('/bootflash/myoutputfile', 'w')
-target.truncate()
+with open('/bootflash/myoutputfile', 'w') as target:
+    target.truncate()
 
-for i in intfs:
-    title = "Interfaces: " + i 
-    print(title) 
-    target.write(title)
-    print(intfs[i])
-    target.write(intfs[i])
-    print("\n\n")
-    target.write("\n\n")
-
-target.close()
+    for i in intfs:
+        title = f"Interfaces: {i}"
+        print(title)
+        target.write(title)
+        print(intfs[i])
+        target.write(intfs[i])
+        print("\n\n")
+        target.write("\n\n")

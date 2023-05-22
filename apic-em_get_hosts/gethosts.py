@@ -48,12 +48,10 @@ def get_hosts(token, url):
 
     # Combine URL, API call and parameters variables
     url += api_call
-	
+
     response = requests.get(url, headers=headers, verify=False).json()
-    
-    # Get hosts list from response and return
-    hosts = response["response"]
-    return hosts
+
+    return response["response"]
     
 	
 # Assign obtained authentication token to a variable. Provide APIC-EM's

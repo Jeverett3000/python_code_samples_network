@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
     # Disable SSL Warnings
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-    
+
     parser = ArgumentParser(description='Select options.')
 
     # Input parameters
@@ -60,13 +60,13 @@ if __name__ == '__main__':
     host = args.host
     port = str(args.port)
 
-    url = "https://" + host + ":" + port + "/restconf/data/Cisco-IOS-XE-native:native"
+    url = f"https://{host}:{port}/restconf/data/Cisco-IOS-XE-native:native"
 
     headers = {
        "Content-Type": "application/yang-data+json",
        "Accept": "application/yang-data+json",
        }
-    
+
     try:
         response = requests.request("GET", url, headers=headers, auth=(username,password), verify=False)
         response.raise_for_status()

@@ -141,9 +141,9 @@ def interface_selection(interfaces, mgmt_if):
 
     # Validate interface input
     # Must be an interface on the device AND NOT be the Management Interface
-    while sel == mgmt_if or not sel in [intf["name"] for intf in interfaces]:
+    while sel == mgmt_if or sel not in [intf["name"] for intf in interfaces]:
         print("INVALID:  Select an available interface.")
-        print("          " + mgmt_if + " is used for management.")
+        print(f"          {mgmt_if} is used for management.")
         print("          Choose another Interface")
         sel = input("Which Interface do you want to configure? ")
 
